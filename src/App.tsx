@@ -1,13 +1,15 @@
-import { Badge, Card, Col, Container, ListGroup, Row } from 'react-bootstrap'
-import BlockchainWorld from './game/BlockchainWorld'
+import { Badge, Col, Container, Row } from 'react-bootstrap'
+import CampusMap from './components/CampusMap'
 import GameHUD from './components/GameHUD'
 import EducationalInsights from './components/EducationalInsights'
+import BlockchainTimeline from './components/BlockchainTimeline'
 import { useTycoonGame } from './hooks/useTycoonGame'
 import './App.css'
 
 function App() {
   const {
     state,
+    campusPlots,
     buildNode,
     upgradeNode,
     selectNode,
@@ -23,24 +25,33 @@ function App() {
 
   return (
     <div className="app-shell">
-      <header className="app-header">
-        <Container>
-          <div className="header-content">
+      <header className="top-bar">
+        <Container fluid>
+          <div className="top-bar__inner">
             <div>
-              <h1>Web3 Impact Tycoon</h1>
+              <h1>Blockchain Campus Tycoon</h1>
               <p>
-                Bouw een blockchain-campus in 3D, beheer middelen als een tycoon en ontdek stap voor stap hoe mining,
-                consensus en smart contracts samenwerken.
+                Bouw en beheer een bovenaanzicht van een blockchain-campus. Plaats miners, validators en smart contract hubs en
+                leg stap voor stap uit hoe web3 werkt.
               </p>
             </div>
-            <div className="header-badges">
-              <Badge bg="warning" text="dark">
-                Blokken: {state.chain.length}
-              </Badge>
-              <Badge bg="info" text="dark">
-                Nodes: {state.nodes.length}
-              </Badge>
-              <Badge bg="success">Studenten: {Math.round(state.studentsInspired)}</Badge>
+            <div className="stat-chips">
+              <div className="stat-chip">
+                <span>Tokens</span>
+                <strong>{Math.round(state.tokens)}</strong>
+              </div>
+              <div className="stat-chip">
+                <span>Kennis</span>
+                <strong>{Math.round(state.knowledge)}</strong>
+              </div>
+              <div className="stat-chip">
+                <span>Reputatie</span>
+                <strong>{Math.round(state.reputation)}</strong>
+              </div>
+              <div className="stat-chip">
+                <span>Energie</span>
+                <strong>{Math.round(state.energy)}</strong>
+              </div>
               <button type="button" className="btn btn-outline-light btn-sm" onClick={togglePause}>
                 {state.paused ? 'Ga verder' : 'Pauzeer simulatie'}
               </button>
@@ -48,101 +59,49 @@ function App() {
           </div>
         </Container>
       </header>
-      <main className="app-main">
+      <main className="main-layout">
         <Container fluid>
-          <Row className="gy-4">
-            <Col xl={6} lg={7}>
-              <section className="world-section">
-                <div className="section-heading">
+          <Row className="g-4 align-items-start">
+            <Col xl={7} lg={8} className="d-flex flex-column gap-4">
+              <section className="panel campus-panel">
+                <div className="panel-header">
                   <div>
-                    <h2>3D Blockchain-campus</h2>
+                    <h2 className="mb-1">Campusoverzicht</h2>
                     <p className="text-muted mb-0">
-                      Gebruik je muis om te draaien en klik op gebouwen om lessen over hun blockchainrol te ontgrendelen.
+                      Klik op gebouwen om details te lezen en gebruik het HUD om nieuwe infrastructuur op vrije kavels te
+                      plaatsen.
                     </p>
                   </div>
-                  <Badge bg="secondary">Cycle {state.cycle}</Badge>
+                  <Badge bg="dark">Cycle {state.cycle}</Badge>
                 </div>
-                <BlockchainWorld
-                  nodes={state.nodes}
-                  chain={state.chain}
-                  selectedNodeId={state.selectedNodeId}
-                  onSelectNode={selectNode}
-                />
+                <CampusMap plots={campusPlots} selectedNodeId={state.selectedNodeId} onSelectNode={selectNode} />
               </section>
+              <BlockchainTimeline chain={state.chain} />
             </Col>
-            <Col xl={6} lg={5}>
-              <section className="hud-section">
-                <GameHUD
-                  state={state}
-                  unlockedConsensus={unlockedConsensus}
-                  currentTutorial={currentTutorial}
-                  tutorialStatus={tutorialStatus}
-                  onBuild={buildNode}
-                  onUpgrade={upgradeNode}
-                  onSelectNode={selectNode}
-                  onRunConsensus={runConsensus}
-                  onDeployContract={deployContract}
-                  onWorkshop={launchWorkshop}
-                  onSwitchConsensus={switchConsensus}
-                />
-              </section>
-            </Col>
-          </Row>
-          <Row className="gy-4 mt-1">
-            <Col xl={8}>
+            <Col xl={5} lg={4} className="d-flex flex-column gap-4">
+              <GameHUD
+                state={state}
+                unlockedConsensus={unlockedConsensus}
+                currentTutorial={currentTutorial}
+                tutorialStatus={tutorialStatus}
+                onBuild={buildNode}
+                onUpgrade={upgradeNode}
+                onSelectNode={selectNode}
+                onRunConsensus={runConsensus}
+                onDeployContract={deployContract}
+                onWorkshop={launchWorkshop}
+                onSwitchConsensus={switchConsensus}
+              />
               <EducationalInsights chain={state.chain} state={state} />
-            </Col>
-            <Col xl={4}>
-              <Card className="scenario-card">
-                <Card.Body>
-                  <h4 className="mb-3">Tycoon-mijlpalen</h4>
-                  <ListGroup variant="flush" className="scenario-list">
-                    <ListGroup.Item>
-                      🛠️ Bouw {Math.max(0, 4 - state.nodes.length)} extra infrastructuren om alle rollen te tonen.
-                    </ListGroup.Item>
-                    <ListGroup.Item>
-                      🔄 Start {Math.max(0, 3 - (state.chain.length - 1))} consensusrondes om het ketenarchief te vullen.
-                    </ListGroup.Item>
-                    <ListGroup.Item>
-                      📜 Bereik smart contract niveau {state.smartContractLevel + 1} om automatische certificaten te demonstreren.
-                    </ListGroup.Item>
-                    <ListGroup.Item>
-                      🎓 Inspireer {Math.max(0, 50 - Math.round(state.studentsInspired))} extra studenten voor SDG-4 impact.
-                    </ListGroup.Item>
-                  </ListGroup>
-                  <div className="mt-3 small text-muted">
-                    Tip: Combineer workshops en consensusrondes om tokens in kennis en reputatie om te zetten.
-                  </div>
-                </Card.Body>
-              </Card>
-              <Card className="glossary-card mt-3">
-                <Card.Body>
-                  <h5>Mini-glossarium</h5>
-                  <ListGroup variant="flush" className="glossary-list">
-                    <ListGroup.Item>
-                      <strong>Tokenisatie:</strong> Maak tastbare en niet-tastbare assets digitaal verhandelbaar binnen je campus.
-                    </ListGroup.Item>
-                    <ListGroup.Item>
-                      <strong>Wallet-simulatie:</strong> Elke node representeert een wallet met rollen en verantwoordelijkheden.
-                    </ListGroup.Item>
-                    <ListGroup.Item>
-                      <strong>Governance:</strong> Gebruik reputatie om stemgewicht en PBFT-besluiten te modelleren.
-                    </ListGroup.Item>
-                    <ListGroup.Item>
-                      <strong>Finaliteit:</strong> Leg uit dat PBFT sneller finaliteit bereikt maar minder deelnemers schaalbaar maakt.
-                    </ListGroup.Item>
-                  </ListGroup>
-                </Card.Body>
-              </Card>
             </Col>
           </Row>
         </Container>
       </main>
       <footer className="app-footer">
-        <Container>
-          <div className="d-flex flex-wrap justify-content-between gap-2">
+        <Container fluid>
+          <div className="footer-inner">
             <span>
-              Web3 Impact Hub · SDG-4 Kwaliteitsonderwijs · Leer door te bouwen, experimenteren en reflecteren.
+              Web3 Impact Hub · SDG-4 Kwaliteitsonderwijs · Leer blockchainprincipes door simulatie, reflectie en beheer.
             </span>
             <span>© {new Date().getFullYear()} Blockchain Education Lab</span>
           </div>

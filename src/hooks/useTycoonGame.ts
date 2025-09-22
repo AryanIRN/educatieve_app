@@ -7,6 +7,16 @@ export type GameNodeType = 'miner' | 'validator' | 'dapp' | 'research'
 
 type NodeStatus = 'active' | 'building'
 
+export type CampusDistrict = 'mining' | 'governance' | 'innovation' | 'knowledge'
+
+export interface NodeLocation {
+  plotId: string
+  row: number
+  col: number
+  label: string
+  district: CampusDistrict
+}
+
 export interface GameNode {
   id: string
   type: GameNodeType
@@ -15,7 +25,7 @@ export interface GameNode {
   level: number
   status: NodeStatus
   progress: number
-  position: [number, number, number]
+  location: NodeLocation
   lore: string
 }
 
@@ -65,26 +75,26 @@ export interface TutorialStep {
   checkComplete: (state: GameState) => boolean
 }
 
-const NODE_POSITIONS: [number, number, number][] = [
-  [-6, 0.5, -3],
-  [-2, 0.5, -3],
-  [2, 0.5, -3],
-  [6, 0.5, -3],
-  [-6, 0.5, 1],
-  [-2, 0.5, 1],
-  [2, 0.5, 1],
-  [6, 0.5, 1],
-]
+type CampusPlotDefinition = NodeLocation & {
+  unlockDescription: string
+  unlock: (state: GameState) => boolean
+}
+
+export interface CampusPlotState extends NodeLocation {
+  unlockDescription: string
+  locked: boolean
+  occupiedBy?: GameNode
+}
 
 const buildLore: Record<GameNodeType, string> = {
   miner:
-    'Miners lossen cryptografische puzzels op en bewijzen dat ze energie hebben ingezet om blokken toe te voegen.',
+    'Miners lossen cryptografische puzzels op. Gebruik dit gebouw om hashing, moeilijkheid en energieverbruik te bespreken.',
   validator:
-    'Validators checken transacties en stemmen over blokken. In proof-of-stake storten ze eigen tokens als borg.',
+    'Validators stemmen over blokken en storten tokens als borg. Perfect om staking en slashing te verkennen.',
   dapp:
-    'DApps (decentralized apps) gebruiken smart contracts om logica uit te voeren zonder centrale beheerder.',
+    'DApps voeren logica uit via smart contracts. Gebruik dit gebouw voor NFT-, DeFi- of certificaat-scenario’s.',
   research:
-    'Onderzoeks-labs doen experimenten met nieuwe protocollen en delen kennis met het netwerk.',
+    'Onderzoekslabs analyseren nieuwe protocollen en governance. Ideaal voor ethiek, compliance en innovatie.',
 }
 
 const NODE_LABELS: Record<GameNodeType, string> = {
@@ -118,50 +128,138 @@ const NODE_PRODUCTION: Record<
   research: { tokens: 5, knowledge: 7, reputation: 2, energy: 6, consensus: 5, students: 3 },
 }
 
+const CAMPUS_PLOTS: CampusPlotDefinition[] = [
+  {
+    plotId: 'A1',
+    row: 2,
+    col: 2,
+    label: 'Mining Hangar West',
+    district: 'mining',
+    unlockDescription: 'Starterplot voor de eerste proof-of-work demonstratie.',
+    unlock: () => true,
+  },
+  {
+    plotId: 'A2',
+    row: 2,
+    col: 3,
+    label: 'Token Mint Plaza',
+    district: 'mining',
+    unlockDescription: 'Verzamel 15 kennis om het tokenlaboratorium te openen.',
+    unlock: (state) => state.knowledge >= 15,
+  },
+  {
+    plotId: 'B1',
+    row: 2,
+    col: 5,
+    label: 'Validator Hall',
+    district: 'governance',
+    unlockDescription: 'Beschikbaar vanaf de start voor consensuslessen.',
+    unlock: () => true,
+  },
+  {
+    plotId: 'B2',
+    row: 2,
+    col: 6,
+    label: 'Community Exchange',
+    district: 'governance',
+    unlockDescription: 'Inspireer 18 studenten om een beursvloer te openen.',
+    unlock: (state) => state.studentsInspired >= 18,
+  },
+  {
+    plotId: 'C1',
+    row: 3,
+    col: 2,
+    label: 'Innovation Garage',
+    district: 'innovation',
+    unlockDescription: 'Bereik reputatie 28 voor een innovatielab.',
+    unlock: (state) => state.reputation >= 28,
+  },
+  {
+    plotId: 'C2',
+    row: 3,
+    col: 6,
+    label: 'Governance Dome',
+    district: 'governance',
+    unlockDescription: 'Haal consensusgezondheid 70% om deze gouvernancehal te activeren.',
+    unlock: (state) => state.consensusHealth >= 70 || state.chain.length >= 3,
+  },
+  {
+    plotId: 'D1',
+    row: 4,
+    col: 2,
+    label: 'Research Conservatory',
+    district: 'knowledge',
+    unlockDescription: 'Leg minstens drie blokken vast om onderzoeksdata te verzamelen.',
+    unlock: (state) => state.chain.length >= 3,
+  },
+  {
+    plotId: 'D2',
+    row: 4,
+    col: 6,
+    label: 'Metaverse Studio',
+    district: 'innovation',
+    unlockDescription: 'Bereik smart contract niveau 1 om deze studio te openen.',
+    unlock: (state) => state.smartContractLevel >= 1,
+  },
+]
+
+const plotById = (plotId: string): CampusPlotDefinition => {
+  const plot = CAMPUS_PLOTS.find((item) => item.plotId === plotId)
+  if (!plot) {
+    throw new Error(`Plot ${plotId} bestaat niet in het campusontwerp`)
+  }
+  return plot
+}
+
+const toLocation = (plot: CampusPlotDefinition): NodeLocation => ({
+  plotId: plot.plotId,
+  row: plot.row,
+  col: plot.col,
+  label: plot.label,
+  district: plot.district,
+})
+
 const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: 'intro',
-    title: 'Welkom bij de Blockchain Tycoon',
+    title: 'Welkom op de Blockchain Campus',
     description:
-      'Bekijk de 3D-campus en klik op een gebouw om te ontdekken welke rol het speelt in het netwerk.',
-    goal: 'Selecteer een bestaande node om zijn uitleg te lezen.',
-    tip: 'Gebruik je muis om rond te draaien en klik op een knipperend gebouw.',
+      'Bekijk de plattegrond vanuit vogelperspectief en klik op een gebouw om te ontdekken welke rol het speelt.',
+    goal: 'Selecteer een bestaand gebouw op de campuskaart.',
+    tip: 'De knipperende tegels geven aan waar je infrastructuur staat. Klik om details te openen.',
     checkComplete: (state) => state.selectedNodeId !== null,
   },
   {
     id: 'build',
-    title: 'Breid je netwerk uit',
+    title: 'Breid je terrein uit',
     description:
-      'Je hebt tokens ontvangen in de genesis-block. Investeer ze in een nieuwe infrastructuur.',
-    goal: 'Bouw een extra node met een van de bouwacties.',
-    tip: 'Kies een type dat past bij je leerdoel, bijvoorbeeld een validator voor consensuslessen.',
+      'Investeer tokens in een nieuw gebouw. Vrijgekomen plots lichten op zodra je de voorwaarden haalt.',
+    goal: 'Plaats een extra node via het actiepanel.',
+    tip: 'Let op de vereiste kennis, reputatie of studentenimpact om nieuwe zones te ontgrendelen.',
     checkComplete: (state) => state.nodes.length >= 3,
   },
   {
     id: 'consensus',
     title: 'Behaal netwerkconsensus',
-    description:
-      'Start een consensusronde om een nieuw blok toe te voegen en beloningen te claimen.',
+    description: 'Start een consensusronde om een nieuw blok toe te voegen aan de blockchain.',
     goal: 'Voer een consensusronde uit.',
-    tip: 'Klik op "Start consensusronde" wanneer je genoeg energie hebt (>30).',
+    tip: 'Zorg dat je minstens 30 energie hebt voordat je de ronde start.',
     checkComplete: (state) => state.chain.length > 1,
   },
   {
     id: 'contract',
     title: 'Activeer een smart contract',
-    description:
-      'Smart contracts voeren automatisch regels uit. Gebruik kennis om een contract te deployen.',
-    goal: 'Deploy minimaal één smart contract-upgrade.',
-    tip: 'De knop kost tokens en kennis maar vergroot je reputatie.',
+    description: 'Gebruik kennis en tokens om een smart contract te deployen dat lessen automatiseert.',
+    goal: 'Bereik minimaal smart contract niveau 1.',
+    tip: 'De actie in het HUD geeft je reputatie en geautomatiseerde certificaten.',
     checkComplete: (state) => state.smartContractLevel > 0,
   },
   {
     id: 'governance',
-    title: 'Experimenteer met consensusmodi',
-    description:
-      'Vergelijk proof-of-work, proof-of-stake en PBFT en zie wat er gebeurt met de netwerkgezondheid.',
-    goal: 'Schakel naar een andere consensusmodus.',
-    tip: 'Nieuwe modi ontgrendel je door kennis en reputatie op te bouwen.',
+    title: 'Vergelijk consensusmechanismen',
+    description: 'Schakel tussen PoW, PoS en PBFT en bespreek met studenten de voor- en nadelen.',
+    goal: 'Activeer een andere consensusmodus.',
+    tip: 'Meer reputatie en kennis ontgrendelt extra consensusopties.',
     checkComplete: (state) => state.consensusMode !== 'pow',
   },
 ]
@@ -170,12 +268,12 @@ const initialNodes: GameNode[] = [
   {
     id: nanoid(),
     type: 'miner',
-    name: 'Genesis Mining Rig',
-    description: 'Produceert de eerste blokken en leert je over proof-of-work.',
+    name: 'Genesis Mining Hangar',
+    description: 'Produceert de eerste blokken en toont hoe proof-of-work werkt.',
     level: 1,
     status: 'active',
     progress: 1,
-    position: NODE_POSITIONS[1],
+    location: toLocation(plotById('A1')),
     lore: buildLore.miner,
   },
   {
@@ -186,7 +284,7 @@ const initialNodes: GameNode[] = [
     level: 1,
     status: 'active',
     progress: 1,
-    position: NODE_POSITIONS[2],
+    location: toLocation(plotById('B1')),
     lore: buildLore.validator,
   },
 ]
@@ -223,7 +321,7 @@ const initialState: GameState = {
       timestamp: new Date().toISOString(),
       category: 'education',
       message:
-        'Welkom! Deze campus toont hoe miners, validators en DApps samenwerken. Volg de tutorial om op te starten.',
+        'Welkom! Gebruik de campuskaart om te laten zien hoe miners, validators en dApps samenwerken. Volg de tutorial om te starten.',
     },
   ],
   consensusMode: 'pow',
@@ -298,7 +396,10 @@ const reducer = (state: GameState, action: GameAction): GameState => {
         const progress = Math.min(1, node.progress + 0.35)
         if (progress >= 1) {
           logs = [
-            createLog('education', `${node.name} is nu operationeel. Bespreek met studenten welke rol dit gebouw vervult.`),
+            createLog(
+              'education',
+              `${node.name} op ${node.location.label} is nu operationeel. Bespreek met studenten welke lessen bij dit district horen.`,
+            ),
             ...logs,
           ]
           return { ...node, status: 'active' as const, progress: 1 }
@@ -324,7 +425,7 @@ const reducer = (state: GameState, action: GameAction): GameState => {
         logs.unshift(
           createLog(
             'education',
-            'Je netwerk produceerde resources. Bekijk de resourcebalk om te zien wat elk gebouw heeft opgeleverd.',
+            'Je campus heeft resources geproduceerd. Gebruik de HUD om de impact op tokens, kennis en reputatie te bespreken.',
           ),
         )
       }
@@ -343,9 +444,27 @@ const reducer = (state: GameState, action: GameAction): GameState => {
       }
     }
     case 'build': {
-      const position = NODE_POSITIONS[state.nodes.length] ?? [0, 0.5, 4]
       const cost = BUILD_COST[action.payload]
       if (!cost) return state
+      const availablePlot = CAMPUS_PLOTS.find(
+        (plot) =>
+          plot.unlock(state) &&
+          !state.nodes.some((node) => node.location.plotId === plot.plotId),
+      )
+
+      if (!availablePlot) {
+        return {
+          ...state,
+          logs: [
+            createLog(
+              'education',
+              'Alle bouwplaatsen zijn nog vergrendeld. Voldoe aan de vereisten op de kaart om nieuwe zones vrij te spelen.',
+            ),
+            ...state.logs,
+          ].slice(0, 40),
+        }
+      }
+
       if (
         state.tokens < cost.tokens ||
         state.knowledge < cost.knowledge ||
@@ -362,6 +481,8 @@ const reducer = (state: GameState, action: GameAction): GameState => {
           ].slice(0, 40),
         }
       }
+
+      const location = toLocation(availablePlot)
       const node: GameNode = {
         id: nanoid(),
         type: action.payload,
@@ -370,9 +491,10 @@ const reducer = (state: GameState, action: GameAction): GameState => {
         level: 1,
         status: 'building',
         progress: 0,
-        position,
+        location,
         lore: buildLore[action.payload],
       }
+
       return {
         ...state,
         tokens: state.tokens - cost.tokens,
@@ -382,7 +504,7 @@ const reducer = (state: GameState, action: GameAction): GameState => {
         logs: [
           createLog(
             'tokens',
-            `Nieuw gebouw gestart: ${node.name}. Binnen korte tijd wordt het actief en produceert het middelen.`,
+            `Campusuitbreiding gestart: ${node.name} verrijst op ${location.label} in de ${location.district}-zone.`,
           ),
           ...state.logs,
         ].slice(0, 40),
@@ -424,7 +546,7 @@ const reducer = (state: GameState, action: GameAction): GameState => {
         logs: [
           createLog(
             'education',
-            `${updatedNode.name} niveau ${updatedNode.level} ontgrendelt nieuwe lessen over ${
+            `${updatedNode.name} niveau ${updatedNode.level} in de ${updatedNode.location.district}-zone ontgrendelt nieuwe lessen over ${
               updatedNode.type === 'miner'
                 ? 'hashing en moeilijkheid'
                 : updatedNode.type === 'validator'
@@ -456,7 +578,7 @@ const reducer = (state: GameState, action: GameAction): GameState => {
           logs: [
             createLog(
               'consensus',
-              'Je hebt minimaal 30 energie nodig om de netwerkapparatuur te draaien voor een consensusronde.',
+              'Je hebt minimaal 30 energie nodig om de apparatuur voor een consensusronde aan te sturen.',
             ),
             ...state.logs,
           ].slice(0, 40),
@@ -606,6 +728,25 @@ export const useTycoonGame = () => {
     [tutorialStatus],
   )
 
+  const campusPlots = useMemo<CampusPlotState[]>(
+    () =>
+      CAMPUS_PLOTS.map((plot) => {
+        const occupiedBy = state.nodes.find((node) => node.location.plotId === plot.plotId)
+        const locked = !occupiedBy && !plot.unlock(state)
+        return {
+          plotId: plot.plotId,
+          row: plot.row,
+          col: plot.col,
+          label: plot.label,
+          district: plot.district,
+          unlockDescription: plot.unlockDescription,
+          locked,
+          occupiedBy,
+        }
+      }),
+    [state],
+  )
+
   return {
     state,
     buildNode,
@@ -619,6 +760,7 @@ export const useTycoonGame = () => {
     unlockedConsensus,
     tutorialStatus,
     currentTutorial,
+    campusPlots,
   }
 }
 

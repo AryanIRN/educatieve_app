@@ -20,6 +20,13 @@ const consensusDescriptions: Record<ConsensusMode, string> = {
   pbft: 'Een leider stelt een blok voor, andere nodes bevestigen. Perfect om PBFT te tonen in consortia en onderwijsnetwerken.',
 }
 
+const districtLabels: Record<string, string> = {
+  mining: 'Mining District',
+  governance: 'Governance Quarter',
+  innovation: 'Innovation Wing',
+  knowledge: 'Knowledge Garden',
+}
+
 const buildOptions: Array<{
   type: GameNodeType
   label: string
@@ -131,6 +138,9 @@ const NodeDetails = ({ node, onUpgrade }: { node: GameNode; onUpgrade: (id: stri
           <div>
             <div className="fw-bold">{node.name}</div>
             <div className="small text-muted">Level {node.level}</div>
+            <div className="small text-muted">
+              {districtLabels[node.location.district] ?? 'Campus zone'} · {node.location.label}
+            </div>
           </div>
           <Badge bg="dark">{node.type}</Badge>
         </div>
@@ -321,7 +331,7 @@ const GameHUD = ({
               <Card.Body>
                 <h5 className="mb-2">Selecteer een gebouw</h5>
                 <p className="text-muted small">
-                  Klik in de 3D-wereld op een gebouw om de rol binnen de blockchain te ontdekken.
+                  Klik op de campuskaart op een gebouw om de rol binnen de blockchain te ontdekken.
                 </p>
                 <button
                   type="button"
