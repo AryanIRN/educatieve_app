@@ -2,25 +2,25 @@
   font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  color: #12263a;
-  background-color: #f4f7fb;
+  color: #f1f5f9;
+  background-color: #050914;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 a {
-  color: #0d6efd;
+  color: #8ecae6;
   text-decoration: none;
 }
 
 a:hover {
-  color: #0a58ca;
+  color: #ffb703;
 }
 
 body {
   margin: 0;
-  background-color: #f4f7fb;
+  background-color: #050914;
 }
 
 * {
