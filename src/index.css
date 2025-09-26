@@ -1,0 +1,28 @@
+:root {
+  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color: #f1f5f9;
+  background-color: #050914;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: #8ecae6;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #ffb703;
+}
+
+body {
+  margin: 0;
+  background-color: #050914;
+}
+
+* {
+  box-sizing: border-box;
+}
